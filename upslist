@@ -1,0 +1,12 @@
+#!/bin/sh
+
+THISDIR=`dirname $0`
+
+if [ -z "$1" -o "$1" = "-h" ]; then
+  echo Usage: $0 PRODUCT
+  exit 0
+fi
+
+source $THISDIR/duneinit.sh
+
+ups list -aK+ $1
