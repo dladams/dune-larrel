@@ -3,7 +3,7 @@ if [ -n "$LBNE_VERBOSE" ]; then
 fi
 source /grid/fermiapp/products/setups.sh
 source /grid/fermiapp/products/larsoft/setup
-source /grid/fermiapp/products/lbne/setup
+source /grid/fermiapp/products/dune/setup_dune.sh
 setup git
 setup gitflow
 setup mrb

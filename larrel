@@ -33,7 +33,8 @@ PUSHBRA=
 PUSHTAG=
 UPSPROD=
 SHOW=
-while getopts 'ghHerRdcvbtClpPuo:n:q:s:' flag; do
+MANIFEST=
+while getopts 'ghHerRdcvbtClpPuo:n:q:s:m:' flag; do
   case "${flag}" in
     g) DBG='true' ;;
     h) HELP='true' ;;
@@ -55,6 +56,7 @@ while getopts 'ghHerRdcvbtClpPuo:n:q:s:' flag; do
     n) NEWVERS="${OPTARG}" ;;
     q) QUAL="${OPTARG}" ;;
     s) SHOW="${OPTARG}" ;;
+    m) MANIFEST=${OPTARG} ;;
     *) "ERROR: Unexpected option ${flag}"; exit 1 ;;
   esac
 done
@@ -124,7 +126,7 @@ fi
 
 # Determine which stage we process through.
 STAGE4=$BUILD$TEST$COMMIT$ENDFLOW$PUSHBRA$PUSHTAG
-STAGE3=$CHKOUT$VERUPD$STAGE4
+STAGE3=$MANIFEST$CHKOUT$VERUPD$STAGE4
 STAGE2=$UPSPROD$STAGE3
 STAGE1=$REMDIR$REMALL$OLDVERS$NEWVERS$DIRMAK$STAGE2
 if [ -n "$DBG" ]; then
@@ -422,6 +424,17 @@ echo $COM >>$COMHISTFILE
 if ! $COM; then
   echo Setup failed for $OLDPROD $OLDVERS
   exit 1
+fi
+
+# For -m, create a manifest
+if [ -n "$MANIFEST" ]; then
+  echo -e $LINE
+  echo Creating manifest for $MANIFEST
+  #set | grep slf6
+  get-directory-name os
+  get-directory-name platform
+  $THISDIR/build_manifest $MANIFEST $QUAL
+  exit 0
 fi
 
 # Set up installed products (dunetpc).

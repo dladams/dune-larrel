@@ -1,0 +1,70 @@
+#! /bin/sh
+
+# dune-sync
+# David Adams
+# September 2015
+#
+# Install dune releases from /grid/fermiapp/products, e.g.
+# cvmfsdune> dune-sync dune/dunetpc/v04_20_00
+
+PROD=$1
+
+if [ -z "$PROD" -o "$PROD" = "-h" ]; then
+  echo Usage: $0 DIR
+  echo   E.g. $0 dune/dunetpc/v04_20_00
+fi
+
+if [ ${PROD%/} != $PROD ]; then
+  echo "Remove trailing slash(es) from argument"
+  exit 1
+fi
+
+SRCPATH=/grid/fermiapp/products/$PROD
+REPO=dune.opensciencegrid.org
+DESTPATH=/cvmfs/$REPO/products/`dirname $PROD`
+ROPTS="-rvplt --stats"
+MYDATE=`date +%Y%m%d_%H%M%S`
+MYPROD=`echo $PROD | sed 's#/#-#g'`
+TAG=${MYPROD}--$MYDATE
+LOG=$HOME/dune-sync.log
+RLOG=$HOME/logs/rsync_$TAG.log
+
+if [ ! -r $SRCPATH ]; then
+  echo Source product not found: $SRCPATH
+  exit 2
+fi
+
+if [ ! -r $DESTPATH ]; then
+  echo Destination path not found: $DESTPATH
+  exit 3
+fi
+
+echo Source: $SRCPATH
+echo Destination: $DESTPATH
+echo Tag: $TAG
+
+echo >>$LOG
+echo -n Transaction $TAG: >>$LOG
+cvmfs_server transaction $REPO
+COM="rsync $ROPTS $SRCPATH $DESTPATH"
+echo Running rsync:
+echo $COM
+echo "-------------------"
+$COM 2>&1 | tee $RLOG
+RET=$?
+echo "-------------------"
+if [ $RET -eq 0 ]; then
+  echo
+  echo Rsync succeeded. Publishing change.
+  echo -n " rsync succeeded" >>$LOG
+  cvmfs_server publish -a $TAG $REPO
+else
+  echo Rsync failed with error $RET. Aborting.
+  echo -n " rsync failed with error $RET" >>$LOG
+  cvmfs_server abort $REPO
+fi
+
+echo >>$LOG
+echo Done
+  
+  
