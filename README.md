@@ -46,6 +46,13 @@ larrel -u
 # Or to build with a specific qualifier:
 larrel -uq e7:debug
 
+# Build the manifest for creating a SciSoft dune bundle.
+# Manifest will be in workdir/manifests
+larrel -m
+
+# Or to build with a specific qualifier:
+larrel -mq e7:debug
+
 # Informational commands
 upslist larsoft
 upslist dunetpc

@@ -1,0 +1,96 @@
+#!/bin/sh
+
+# build_manifest
+# David Adams
+# August 2015
+#
+# Builds the SciSoft manifest for dune.
+
+BUNDLE=$1
+QUAL=$2
+VERS=$LARSOFT_VERSION
+DOTVERS=`echo $VERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
+FLAVOR=
+if uname | grep -q Darwin; then
+  FLAVOR=`ups flavor -2`
+else
+  FLAVOR=`ups flavor`
+fi
+HYPHENQUAL=`echo $QUAL | tr : - | sed 's/-noifdh//'`
+XXX=s15
+OPSYS=` get-directory-name os`
+PLATFORM=` get-directory-name platform`
+
+DBG=1
+
+# Check the variables are defined.
+for VAR in BUNDLE VERS DOTVERS FLAVOR QUAL HYPHENQUAL OPSYS PLATFORM; do
+  eval VAL=\$$VAR
+  if [ -z "$VAL" ]; then
+    echo Variable $VAR must be defined.
+    exit 1
+  fi
+  echo $VAR = $VAL
+done
+
+LARFILE=larsoft-$DOTVERS-$FLAVOR-$XXX-${HYPHENQUAL}_MANIFEST.txt
+LARURL=http://scisoft.fnal.gov/scisoft/bundles/larsoft/$VERS/manifest/$LARFILE
+curl --fail --silent $LARURL > $LARFILE
+STAT=$?
+if [ $STAT -ne 0 ]; then
+  echo Unable to retrieve larsoft manifest from
+  echo $LARURL
+  rm $LARFILE
+  exit 2
+fi
+echo Retrieved larsoft manifest.
+
+NEWFILE=$BUNDLE-$DOTVERS-$FLAVOR-${HYPHENQUAL}_MANIFEST.txt
+cp $LARFILE $NEWFILE
+TARSUFF=$OPSYS-$PLATFORM-$HYPHENQUAL.tar.bz2
+if [ $BUNDLE == dune ]; then
+  TARNAME=dunetpc-v$DOTVERS-$TARSUFF
+  FORMAT="%-21s%-16s%-61s%3s\n"
+  printf $FORMAT dunetpc $VERS ${TARNAME} >>$NEWFILE
+  for PKG in duneutil dune_pardata lbne_raw_data; do
+    # Get the version number in dot format
+    PKGVERS=`ups depend dunetpc $VERS -q $QUAL | grep "|__$PKG" | sed 's/.*|__//g' | awk '{print $2}'`
+    DOTPKGVERS=`echo $PKGVERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
+    # Build the tar file name
+    TEMPPKG=larsoft
+    if [ $PKG = lbne_raw_data ]; then TEMPPKG=ifdh_art; fi
+    if [ $PKG = dune_pardata ]; then TEMPPKG=larbatch; fi
+    TEMPLINE=`grep "$TEMPPKG " $LARFILE | grep -v noifdh`
+    TEMPVERS=`echo $TEMPLINE | awk '{print $2}'`
+    DOTTEMPVERS=`echo $TEMPVERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
+    TEMPTAR=`echo $TEMPLINE | awk '{print $3}'`
+    PKGTAR=`echo $TEMPTAR | sed "s/$TEMPPKG-$DOTTEMPVERS-/$PKG-$DOTPKGVERS-/1"`
+    PKGURL=http://scisoft.fnal.gov/scisoft/packages/$PKG/$PKGVERS/$PKGTAR
+    if true; then
+      echo "----"
+      echo $TEMPTAR
+      echo $TEMPPKG-$DOTTEMPVERS-
+      echo $PKG
+      echo $PKGVERS
+      echo $PKGTAR
+      echo $PKGURL
+      echo "----"
+    fi
+    if [ $PKGTAR = $TEMPTAR ]; then
+      echo Unable to convert template tar name for $PKG $PKGVERS
+      exit 3
+    fi
+    if ! curl -Is $PKGURL| head -1 | grep 200 >/dev/null; then
+      echo Unable to find tar file for $PKG $PKGVERS at URL
+      echo "   $PKGURL"
+      exit 4
+    fi
+    printf $FORMAT $PKG $PKGVERS $PKGTAR >>$NEWFILE
+  done
+else
+  echo Unsupported bundle: $BUNDLE
+  exit 3
+fi
+echo New manifest is: `pwd`/$NEWFILE
+
+echo Done

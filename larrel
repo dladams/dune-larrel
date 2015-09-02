@@ -34,7 +34,7 @@ PUSHTAG=
 UPSPROD=
 SHOW=
 MANIFEST=
-while getopts 'ghHerRdcvbtClpPuo:n:q:s:m:' flag; do
+while getopts 'ghHerRdcvbtClpPuo:n:q:s:m' flag; do
   case "${flag}" in
     g) DBG='true' ;;
     h) HELP='true' ;;
@@ -56,7 +56,7 @@ while getopts 'ghHerRdcvbtClpPuo:n:q:s:m:' flag; do
     n) NEWVERS="${OPTARG}" ;;
     q) QUAL="${OPTARG}" ;;
     s) SHOW="${OPTARG}" ;;
-    m) MANIFEST=${OPTARG} ;;
+    m) MANIFEST=dune ;;
     *) "ERROR: Unexpected option ${flag}"; exit 1 ;;
   esac
 done
@@ -433,7 +433,11 @@ if [ -n "$MANIFEST" ]; then
   #set | grep slf6
   get-directory-name os
   get-directory-name platform
+  if [ ! -r manifests ]; then mkdir manifests; fi
+  OLDDIR=`pwd`
+  cd manifests
   $THISDIR/build_manifest $MANIFEST $QUAL
+  cd $OLDDIR
   exit 0
 fi
 
