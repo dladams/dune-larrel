@@ -11,6 +11,7 @@ QUAL=$2
 VERS=$LARSOFT_VERSION
 DOTVERS=`echo $VERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
 FLAVOR=
+DBG=
 if uname | grep -q Darwin; then
   FLAVOR=`ups flavor -2`
 else
@@ -21,8 +22,6 @@ XXX=s15
 OPSYS=` get-directory-name os`
 PLATFORM=` get-directory-name platform`
 
-DBG=1
-
 # Check the variables are defined.
 for VAR in BUNDLE VERS DOTVERS FLAVOR QUAL HYPHENQUAL OPSYS PLATFORM; do
   eval VAL=\$$VAR
@@ -30,7 +29,7 @@ for VAR in BUNDLE VERS DOTVERS FLAVOR QUAL HYPHENQUAL OPSYS PLATFORM; do
     echo Variable $VAR must be defined.
     exit 1
   fi
-  echo $VAR = $VAL
+  if [ -n "$DBG" ]; then echo $VAR = $VAL; fi
 done
 
 LARFILE=larsoft-$DOTVERS-$FLAVOR-$XXX-${HYPHENQUAL}_MANIFEST.txt
@@ -43,13 +42,19 @@ if [ $STAT -ne 0 ]; then
   rm $LARFILE
   exit 2
 fi
-echo Retrieved larsoft manifest.
+if [ -n "$DBG"]; then echo Retrieved larsoft manifest.; fi
 
 NEWFILE=$BUNDLE-$DOTVERS-$FLAVOR-${HYPHENQUAL}_MANIFEST.txt
 cp $LARFILE $NEWFILE
 TARSUFF=$OPSYS-$PLATFORM-$HYPHENQUAL.tar.bz2
 if [ $BUNDLE == dune ]; then
-  TARNAME=dunetpc-v$DOTVERS-$TARSUFF
+  TARNAME=dunetpc-$DOTVERS-$TARSUFF
+  PKGURL=http://scisoft.fnal.gov/scisoft/packages/dunetpc/$VERS/$TARNAME
+  if ! curl -Is $PKGURL| head -1 | grep 200 >/dev/null; then
+    echo Unable to find tar file for dunetpc $VERS at URL
+    echo "   $PKGURL"
+    exit 4
+  fi
   FORMAT="%-21s%-16s%-61s%3s\n"
   printf $FORMAT dunetpc $VERS ${TARNAME} >>$NEWFILE
   for PKG in duneutil dune_pardata lbne_raw_data; do
@@ -66,7 +71,7 @@ if [ $BUNDLE == dune ]; then
     TEMPTAR=`echo $TEMPLINE | awk '{print $3}'`
     PKGTAR=`echo $TEMPTAR | sed "s/$TEMPPKG-$DOTTEMPVERS-/$PKG-$DOTPKGVERS-/1"`
     PKGURL=http://scisoft.fnal.gov/scisoft/packages/$PKG/$PKGVERS/$PKGTAR
-    if true; then
+    if false; then
       echo "----"
       echo $TEMPTAR
       echo $TEMPPKG-$DOTTEMPVERS-
@@ -93,4 +98,4 @@ else
 fi
 echo New manifest is: `pwd`/$NEWFILE
 
-echo Done
+if [ -n "$DBG" ]; then echo Done; fi

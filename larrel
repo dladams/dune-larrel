@@ -431,8 +431,8 @@ if [ -n "$MANIFEST" ]; then
   echo -e $LINE
   echo Creating manifest for $MANIFEST
   #set | grep slf6
-  get-directory-name os
-  get-directory-name platform
+  #get-directory-name os
+  #get-directory-name platform
   if [ ! -r manifests ]; then mkdir manifests; fi
   OLDDIR=`pwd`
   cd manifests
