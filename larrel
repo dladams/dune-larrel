@@ -128,7 +128,7 @@ fi
 STAGE4=$BUILD$TEST$COMMIT$ENDFLOW$PUSHBRA$PUSHTAG
 STAGE3=$MANIFEST$CHKOUT$VERUPD$STAGE4
 STAGE2=$UPSPROD$STAGE3
-STAGE1=$REMDIR$REMALL$OLDVERS$NEWVERS$DIRMAK$STAGE2
+STAGE1=$ENVCHK$REMDIR$REMALL$OLDVERS$NEWVERS$DIRMAK$STAGE2
 if [ -n "$DBG" ]; then
   echo Stage 1: $STAGE1
   echo Stage 2: $STAGE2
@@ -182,6 +182,7 @@ if [ -n "$ENVCHK" ]; then
       echo Found command $NAME
     fi
   done
+  echo UPS flavor: `ups flavor`
 fi
 
 # For option -r, we remove any previous builds.
