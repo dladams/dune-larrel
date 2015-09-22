@@ -10,10 +10,12 @@ if [ -z "$PRODUCTS" ]; then
   PRODUCTS=/grid/fermiapp/products
 fi
 if [ -r $PRODUCTS ]; then
-  source $PRODUCTS/setups
   if [ $PRODUCTS = /grid/fermiapp/products ]; then
+    source /grid/fermiapp/products/setups.sh
     source /grid/fermiapp/products/larsoft/setup
     source /grid/fermiapp/products/dune/setup_dune.sh
+  else
+    source $PRODUCTS/setups
   fi
   FLAVOR=`ups flavor`
   # On Linux, we set up git to get FNAL-preferred version.
