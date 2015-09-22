@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 THISDIR=`dirname $0`
 

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # David Adams
 # October, 2014
@@ -66,6 +66,8 @@ if [ -n "$README" ]; then
   cat $THISDIR/README.md
   exit 0
 fi
+
+LINE="\n===================================="
 
 # For option -R, remove everything and exit.
 if [ -n "$REMALL" ]; then
@@ -162,8 +164,6 @@ if [ -n "$HELP" ]; then
   echo "  -n NEWVERS: Set the version for the new product (dunetpc)"
   exit 0
 fi
-
-LINE="\n===================================="
 
 # Source the initialization script.
 echo -e $LINE
