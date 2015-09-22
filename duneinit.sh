@@ -1,22 +1,38 @@
-if [ -n "$LBNE_VERBOSE" ]; then
+# duneinit.sh
+#
+# David Adams
+# Updated September 2015
+#
+if [ -n "$DUNE_VERBOSE" ]; then
   echo Setting up PRODUCTS for FNAL
 fi
-if [ -r /grid/fermiapp/products ]; then
-  source /grid/fermiapp/products/setups.sh
-  source /grid/fermiapp/products/larsoft/setup
-  source /grid/fermiapp/products/dune/setup_dune.sh
-else if [ -n "$PRODUCTS" -a -r $PRODUCTS ]; then
+if [ -z "$PRODUCTS" ]; then
+  PRODUCTS=/grid/fermiapp/products
+fi
+if [ -r $PRODUCTS ]; then
   source $PRODUCTS/setups
+  if [ $PRODUCTS = /grid/fermiapp/products ]; then
+    source /grid/fermiapp/products/larsoft/setup
+    source /grid/fermiapp/products/dune/setup_dune.sh
+  fi
+  FLAVOR=`ups flavor`
+  # On Linux, we set up git to get FNAL-preferred version.
+  # on Darwin, we need patch to getopt.
+  if echo $FLAVOR | grep -q ^Linux; then
+    setup git
+  else if echo $FLAVOR | grep -q ^Darwin; then
+    setup getopt v1_1_6
+  else
+    echo duneinit.sh: WARNING: Unknown UPS flavor: $FLAVOR
+  fi; fi
+  setup gitflow
+  setup mrb
+  export MRB_PROJECT=larsoft
+  if [ -n "$DUNE_VERBOSE" ]; then
+    type mrbsetenv
+    type setup
+    echo duneinit.sh: Finished setting up PRODUCTS for FNAL
+  fi
 else
-  echo duneinit.sh: ERROR: UPS directory not found
-  echo Either PRODUCTS must be defined or /grid/fermiapp/products must be present
-fi; fi
-setup git
-setup gitflow
-setup mrb
-export MRB_PROJECT=larsoft
-if [ -n "$LBNE_VERBOSE" ]; then
-  type mrbsetenv
-  type setup
-  echo Finished setting up PRODUCTS for FNAL
+  echo duneint.sh: ERROR: Products directory is not readable: $PRODUCTS
 fi
