@@ -322,7 +322,7 @@ if [ -z "$STAGE2" ]; then
 fi
 
 # Check that development are exists or we are doing UPS build.
-if [ ! -r srcs -a -z "$UPSPROD" ]; then
+if [ ! -r srcs -a -z "$UPSPROD$MANIFEST" ]; then
   echo "ERROR: Use -d to create development area"
   exit 1
 fi

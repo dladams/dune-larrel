@@ -12,12 +12,15 @@ VERS=$LARSOFT_VERSION
 DOTVERS=`echo $VERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
 FLAVOR=
 DBG=
+ISDARWIN=
 if uname | grep -q Darwin; then
   FLAVOR=`ups flavor -2`
+  ISDARWIN=true
 else
   FLAVOR=`ups flavor`
 fi
-HYPHENQUAL=`echo $QUAL | tr : - | sed 's/-noifdh//'`
+HYPHENQUALNOIFDH=`echo $QUAL | tr : - | sed 's/-noifdh//'`
+HYPHENQUAL=`echo $QUAL | tr : -`
 XXX=s15
 OPSYS=` get-directory-name os`
 PLATFORM=` get-directory-name platform`
@@ -32,7 +35,14 @@ for VAR in BUNDLE VERS DOTVERS FLAVOR QUAL HYPHENQUAL OPSYS PLATFORM; do
   if [ -n "$DBG" ]; then echo $VAR = $VAL; fi
 done
 
-LARFILE=larsoft-$DOTVERS-$FLAVOR-$XXX-${HYPHENQUAL}_MANIFEST.txt
+# Check if dunetpc is installed. This needed to get dependencies from ups.
+CHECK=`ups list -aK+ dunetpc $VERS -q $QUAL`
+if [ -z "$CHECK" ]; then
+  echo Please install dunetpc $VERS $QUAL
+  exit 1
+fi
+
+LARFILE=larsoft-$DOTVERS-$FLAVOR-$XXX-${HYPHENQUALNOIFDH}_MANIFEST.txt
 LARURL=http://scisoft.fnal.gov/scisoft/bundles/larsoft/$VERS/manifest/$LARFILE
 curl --fail --silent $LARURL > $LARFILE
 STAT=$?
@@ -57,15 +67,27 @@ if [ $BUNDLE == dune ]; then
   fi
   FORMAT="%-21s%-16s%-61s%3s\n"
   printf $FORMAT dunetpc $VERS ${TARNAME} >>$NEWFILE
-  for PKG in duneutil dune_pardata lbne_raw_data; do
+  PKGS="dune_pardata lbne_raw_data"
+  if [ -z "$ISDARWIN" ]; then
+    PKGS="duneutil $PKGS"
+  fi
+  for PKG in $PKGS; do
     # Get the version number in dot format
     PKGVERS=`ups depend dunetpc $VERS -q $QUAL | grep "|__$PKG" | sed 's/.*|__//g' | awk '{print $2}'`
     DOTPKGVERS=`echo $PKGVERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
     # Build the tar file name
     TEMPPKG=larsoft
-    if [ $PKG = lbne_raw_data ]; then TEMPPKG=ifdh_art; fi
+    if [ $PKG = lbne_raw_data ]; then TEMPPKG=artdaq_core; fi
     if [ $PKG = dune_pardata ]; then TEMPPKG=larbatch; fi
     TEMPLINE=`grep "$TEMPPKG " $LARFILE | grep -v noifdh`
+    if [ -z "$TEMPLINE" ]; then
+      TEMPLINE=`grep "$TEMPPKG " $LARFILE`
+    fi
+    if [ -z "$TEMPLINE" ]; then
+      echo Unable to find $TEMPPKG in larsoft manifest:
+      echo `pwd`/$LARFILE
+      exit 3
+    fi
     TEMPVERS=`echo $TEMPLINE | awk '{print $2}'`
     DOTTEMPVERS=`echo $TEMPVERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
     TEMPTAR=`echo $TEMPLINE | awk '{print $3}'`
@@ -83,12 +105,12 @@ if [ $BUNDLE == dune ]; then
     fi
     if [ $PKGTAR = $TEMPTAR ]; then
       echo Unable to convert template tar name for $PKG $PKGVERS
-      exit 3
+      exit 4
     fi
     if ! curl -Is $PKGURL| head -1 | grep 200 >/dev/null; then
       echo Unable to find tar file for $PKG $PKGVERS at URL
       echo "   $PKGURL"
-      exit 4
+      exit 5
     fi
     printf $FORMAT $PKG $PKGVERS $PKGTAR >>$NEWFILE
   done

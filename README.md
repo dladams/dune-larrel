@@ -43,8 +43,10 @@ larrel -lp
 # Tar file will be in workdir/reldir/build*
 larrel -u
 
-# Or to build with a specific qualifier:
+# Or to build with a specific qualifier, e.g. linux debug`:
 larrel -uq e7:debug
+# or mac debug:
+larrel -uq e7:noifdh:debug
 
 # Build the manifest for creating a SciSoft dune bundle.
 # Manifest will be in workdir/manifests
