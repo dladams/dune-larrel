@@ -22,6 +22,8 @@ REMALL=
 DIRMAK=
 CHKOUT=
 VERUPD=
+STARTFLOW=
+TRACKFLOW=
 BUILD=
 QUAL=
 BLDTEST=
@@ -35,7 +37,7 @@ UPSPROD=
 UPSTEST=
 SHOW=
 MANIFEST=
-while getopts 'ghHerRdcvbtClpPuTo:n:q:s:m' flag; do
+while getopts 'ghHerRdcvVbtClpPuTo:n:q:s:m' flag; do
   case "${flag}" in
     g) DBG='true' ;;
     h) HELP='true' ;;
@@ -45,7 +47,8 @@ while getopts 'ghHerRdcvbtClpPuTo:n:q:s:m' flag; do
     R) REMALL='true' ;;
     d) DIRMAK='true' ;;
     c) CHKOUT='true' ;;
-    v) VERUPD='true' ;;
+    v) VERUPD='true'; STARTFLOW=true ;;
+    V) VERUPD='true'; TRACKFLOW=true ;;
     b) BUILD='true' ;;
     t) BLDTEST='true' ;;
     C) COMMIT='true' ;;
@@ -526,9 +529,9 @@ else
 fi
 
 # For option -v, start a gitflow release.
-if [ -n "$VERUPD" ]; then
+# For option -V, track an existing gitflow release.
+if [ -n "$STARTFLOW" -o -n "$TRACKFLOW" ]; then
   echo -e $LINE
-  echo Starting flow
   if grep startflow $HISTFILE 1>/dev/null 2>&1; then
     echo ERROR: Flow is already started.
     exit 1
@@ -540,12 +543,22 @@ if [ -n "$VERUPD" ]; then
     $COM
   fi
   echo
-  echo Starting flow.
-  COM="git flow release start $NEWVERS"
-  echo $COM >>$COMHISTFILE
-  if ! $COM; then
-    echo "ERROR: Error creating gitflow release."
-    exit 1
+  if [ -n "$STARTFLOW" ]; then
+    echo Starting flow.
+    COM="git flow release start $NEWVERS"
+    echo $COM >>$COMHISTFILE
+    if ! $COM; then
+      echo "ERROR: Error starting gitflow release."
+      exit 1
+    fi
+  else
+    echo Tracking flow.
+    COM="git flow release track $NEWVERS"
+    echo $COM >>$COMHISTFILE
+    if ! $COM; then
+      echo "ERROR: Error tracking gitflow release."
+      exit 1
+    fi
   fi
   echo startflow >> $HISTFILE
   echo "Listing branches:"
