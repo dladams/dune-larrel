@@ -348,6 +348,7 @@ PLATFORM=
 PLATFORM=`get-directory-name os`
 
 # For option -u, build UPS product.
+# For option -T, test build for UPS product.
 if [ -n "$UPSPROD" -o -n "$UPSTEST" ]; then
   echo -e $LINE
   echo Building or testing UPS product $NEWPROD $NEWVERS
@@ -406,26 +407,13 @@ if [ -n "$UPSPROD" -o -n "$UPSTEST" ]; then
       grep ^error: $UPSLOG
       exit 1
     fi 
-  fi
-  # Move to the build directory.
-  echo MRB_SOURCE=$MRB_SOURCE
-  if [ -z "$MRB_BUILDDIR" ]; then
-    echo MRB_BUILDDIR is not defined.
-    exit 1
-  fi
-  if [ ! -r "$MRB_BUILDDIR" ]; then
-    echo MRB_BUILDDIR does not exist:
-    echo "  $MRB_BUILDIR"
-    exit 1
-  fi
-  COM="cd $MRB_BUILDDIR"
-  $COM
-  echo $COM>>$COMHISTFILE
-  COM=mrbsetenv
-  $COM
-  echo $COM>>$COMHISTFILE
-  # Build the product.
-  if [ -n "$UPSPROD" ]; then
+    COM="cd $MRB_BUILDDIR"
+    $COM
+    echo $COM>>$COMHISTFILE
+    COM=mrbsetenv
+    $COM
+    echo $COM>>$COMHISTFILE
+    # Build the product.
     UPSLOG=$TOPDIR/workdir/$RELDIR/upsbuild.log
     echo Building. Log is $UPSLOG
     mrb b >$UPSLOG 2>&1
@@ -435,9 +423,15 @@ if [ -n "$UPSPROD" -o -n "$UPSTEST" ]; then
   fi
   # Test the product.
   if [ -n "$UPSTEST" ]; then
+echo 1
+    PRODDIR=`ls -d localProducts_*`
+    source $PRODDIR/setup
+    set | grep MRB
+    cd $MRB_BUILDDIR
+    mrbsetenv
     UPSLOG=$TOPDIR/workdir/$RELDIR/upstest.log
     echo Testing. Log is $UPSLOG
-    mrb test >$UPSLOG 2>&1
+    mrb test 2>&1 | tee $UPSLOG
   fi
   echo -e $LINE
   echo Product build file:
