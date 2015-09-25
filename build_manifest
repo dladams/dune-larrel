@@ -8,6 +8,7 @@
 
 BUNDLE=$1
 QUAL=$2
+SRCDIR=$3
 VERS=$LARSOFT_VERSION
 DOTVERS=`echo $VERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
 FLAVOR=
@@ -69,9 +70,16 @@ if [ $BUNDLE == dune ]; then
   printf $FORMAT dunetpc $VERS ${TARNAME} >>$NEWFILE
   PKGS="dune_pardata lbne_raw_data"
   PKGS="duneutil $PKGS"
+  PRODDEPS=$SRCDIR/dunetpc/ups/product_deps
+  if [ ! -r $PRODDEPS ]; then
+    echo Product deps not found at
+    echo "  $PRODDEPS"
+    exit 1
+  fi
   for PKG in $PKGS; do
     # Get the version number in dot format
-    PKGVERS=`ups depend dunetpc $VERS -q $QUAL | grep "|__$PKG" | sed 's/.*|__//g' | awk '{print $2}'`
+    #PKGVERS=`ups depend dunetpc $VERS -q $QUAL | grep "|__$PKG" | sed 's/.*|__//g' | awk '{print $2}'`
+    PKGVERS=`grep ^$PKG $PRODDEPS | awk '{print $2}'`
     DOTPKGVERS=`echo $PKGVERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
     # Build the tar file name
     TEMPPKG=larsoft

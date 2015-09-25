@@ -423,7 +423,6 @@ if [ -n "$UPSPROD" -o -n "$UPSTEST" ]; then
   fi
   # Test the product.
   if [ -n "$UPSTEST" ]; then
-echo 1
     PRODDIR=`ls -d localProducts_*`
     source $PRODDIR/setup
     set | grep MRB
@@ -468,8 +467,10 @@ if [ -n "$MANIFEST" ]; then
   #get-directory-name platform
   if [ ! -r manifests ]; then mkdir manifests; fi
   OLDDIR=`pwd`
+  RELDIR=`echo reldir-$PLATFORM-$QUAL | sed 's/:/-/g'`
+  SRCDIR=`pwd`/$RELDIR/srcs
   cd manifests
-  $THISDIR/build_manifest $MANIFEST $QUAL
+  $THISDIR/build_manifest $MANIFEST $QUAL $SRCDIR
   cd $OLDDIR
   exit 0
 fi
