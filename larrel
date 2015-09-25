@@ -24,7 +24,7 @@ CHKOUT=
 VERUPD=
 BUILD=
 QUAL=
-Test=
+BLDTEST=
 OLDVERS=
 NEWVERS=
 COMMIT=
@@ -32,9 +32,10 @@ ENDFLOW=
 PUSHBRA=
 PUSHTAG=
 UPSPROD=
+UPSTEST=
 SHOW=
 MANIFEST=
-while getopts 'ghHerRdcvbtClpPuo:n:q:s:m' flag; do
+while getopts 'ghHerRdcvbtClpPuTo:n:q:s:m' flag; do
   case "${flag}" in
     g) DBG='true' ;;
     h) HELP='true' ;;
@@ -46,12 +47,13 @@ while getopts 'ghHerRdcvbtClpPuo:n:q:s:m' flag; do
     c) CHKOUT='true' ;;
     v) VERUPD='true' ;;
     b) BUILD='true' ;;
-    t) TEST='true' ;;
+    t) BLDTEST='true' ;;
     C) COMMIT='true' ;;
     l) COMMIT='true'; ENDFLOW='true' ;;
     p) PUSHBRA='true'; PUSHTAG='true' ;;
     P) PUSHTAG='true' ;;
     u) UPSPROD='true' ;;
+    T) UPSTEST='true' ;;
     o) OLDVERS="${OPTARG}" ;;
     n) NEWVERS="${OPTARG}" ;;
     q) QUAL="${OPTARG}" ;;
@@ -127,9 +129,9 @@ if [ -n "$SHOW" ]; then
 fi
 
 # Determine which stage we process through.
-STAGE4=$BUILD$TEST$COMMIT$ENDFLOW$PUSHBRA$PUSHTAG
+STAGE4=$BUILD$BLDTEST$COMMIT$ENDFLOW$PUSHBRA$PUSHTAG
 STAGE3=$MANIFEST$CHKOUT$VERUPD$STAGE4
-STAGE2=$UPSPROD$STAGE3
+STAGE2=$UPSPROD$UPSTEST$STAGE3
 STAGE1=$ENVCHK$REMDIR$REMALL$OLDVERS$NEWVERS$DIRMAK$STAGE2
 if [ -n "$DBG" ]; then
   echo Stage 1: $STAGE1
@@ -321,8 +323,8 @@ if [ -z "$STAGE2" ]; then
   exit 0
 fi
 
-# Check that development are exists or we are doing UPS build.
-if [ ! -r srcs -a -z "$UPSPROD$MANIFEST" ]; then
+# Check that development are exists or we are doing UPS build, test or manifest.
+if [ ! -r srcs -a -z "$UPSPROD$UPSTEST$MANIFEST" ]; then
   echo "ERROR: Use -d to create development area"
   exit 1
 fi
@@ -343,75 +345,99 @@ PLATFORM=
 PLATFORM=`get-directory-name os`
 
 # For option -u, build UPS product.
-if [ -n "$UPSPROD" ]; then
+if [ -n "$UPSPROD" -o -n "$UPSTEST" ]; then
   echo -e $LINE
-  echo Building UPS product $NEWPROD $NEWVERS
+  echo Building or testing UPS product $NEWPROD $NEWVERS
   if test -z "$PLATFORM"; then
     echo Platform could not be determined.
     exit 1
   fi
   RELDIR=`echo reldir-$PLATFORM-$QUAL | sed 's/:/-/g'`
   echo Release directory: $RELDIR
-  if [ -r $RELDIR ]; then
-    echo Release directory already exists.
-    echo Delete workdir/$RELDIR it before to rebuilding release.
-    exit 1
-  fi
-  rm -rf $RELDIR
-  if ! mkdir $RELDIR; then
-    echo "ERROR: Unable to to create release directory."
-    exit 1
+  if [ -n "$UPSPROD" ]; then
+    if [-r $RELDIR ]; then
+      echo Release directory already exists.
+      echo Delete workdir/$RELDIR it before to rebuilding release.
+      exit 1
+    fi
+    rm -rf $RELDIR
+    if ! mkdir $RELDIR; then
+      echo "ERROR: Unable to to create release directory."
+      exit 1
+    fi
   fi
   COM="cd $RELDIR"
   echo $COM >>$COMHISTFILE
   $COM
   echo $RELDIR >>$HISTFILE
   echo MRB_SOURCE=$MRB_SOURCE
-  COM="mrb newDev -v $OLDVERS -q $QUAL"
-  echo $COM>>$COMHISTFILE
-  if ! $COM; then
-    echo "ERROR: Unable to make development area for $OLDVERS"
-    exit 1
-  fi
-  echo MRB_SOURCE=$MRB_SOURCE
-  for DIR in localProducts*; do
-    echo "  $DIR"
-    COM="source $DIR/setup"
+  # Create the release build area and check out the SW.
+  if [ -n "$UPSPROD" ]; then
+    COM="mrb newDev -v $OLDVERS -q $QUAL"
+    echo $COM>>$COMHISTFILE
+    if ! $COM; then
+      echo "ERROR: Unable to make development area for $OLDVERS"
+      exit 1
+    fi
+    echo MRB_SOURCE=$MRB_SOURCE
+    for DIR in localProducts*; do
+      echo "  $DIR"
+      COM="source $DIR/setup"
+      $COM
+      echo $COM>>$COMHISTFILE
+    done
+    COM="cd $MRB_SOURCE"
     $COM
     echo $COM>>$COMHISTFILE
-  done
-  COM="cd $MRB_SOURCE"
-  $COM
-  echo $COM>>$COMHISTFILE
-  UPSLOG=$TOPDIR/workdir/$RELDIR/upscheckout.log
-  COM="mrb gitCheckout -t $NEWVERS $NEWPROD"
-  echo Checking out $NEWPROD $NEWVERS. Log is $UPSLOG.
-  #if ! mrb gitCheckout -t $NEWVERS $NEWPROD >$LOG 2>&1; then
-  echo $COM>>$COMHISTFILE
-  if ! $COM >>$UPSLOG 2>&1; then
-    echo "ERROR: Unable to check out $NEWPROD $NEWVERS"
-    exit 1
-  fi 
-  if grep ^error: $UPSLOG; then
-    echo "ERROR: Error checking out $NEWPROD $NEWVERS:"
-    grep ^error: $UPSLOG
-    exit 1
-  fi 
+    UPSLOG=$TOPDIR/workdir/$RELDIR/upscheckout.log
+    COM="mrb gitCheckout -t $NEWVERS $NEWPROD"
+    echo Checking out $NEWPROD $NEWVERS. Log is $UPSLOG.
+    #if ! mrb gitCheckout -t $NEWVERS $NEWPROD >$LOG 2>&1; then
+    echo $COM>>$COMHISTFILE
+    if ! $COM >>$UPSLOG 2>&1; then
+      echo "ERROR: Unable to check out $NEWPROD $NEWVERS"
+      exit 1
+    fi 
+    if grep ^error: $UPSLOG; then
+      echo "ERROR: Error checking out $NEWPROD $NEWVERS:"
+      grep ^error: $UPSLOG
+      exit 1
+    fi 
+  fi
+  # Move to the build directory.
   echo MRB_SOURCE=$MRB_SOURCE
+  if [ -z "$MRB_BUILDDIR" ]; then
+    echo MRB_BUILDDIR is not defined.
+    exit 1
+  fi
+  if [ ! -r "$MRB_BUILDDIR" ]; then
+    echo MRB_BUILDDIR does not exist:
+    echo "  $MRB_BUILDIR"
+    exit 1
+  fi
   COM="cd $MRB_BUILDDIR"
   $COM
   echo $COM>>$COMHISTFILE
   COM=mrbsetenv
   $COM
   echo $COM>>$COMHISTFILE
-  UPSLOG=$TOPDIR/workdir/$RELDIR/upsbuild.log
-  echo Building. Log is $UPSLOG
-  mrb b >$UPSLOG 2>&1
-  UPSLOG=$TOPDIR/workdir/$RELDIR/upsmake.log
-  echo Making product. Log is $UPSLOG
-  mrb makePackage >$UPSLOG 2>&1
+  # Build the product.
+  if [ -n "$UPSPROD" ]; then
+    UPSLOG=$TOPDIR/workdir/$RELDIR/upsbuild.log
+    echo Building. Log is $UPSLOG
+    mrb b >$UPSLOG 2>&1
+    UPSLOG=$TOPDIR/workdir/$RELDIR/upsmake.log
+    echo Making product. Log is $UPSLOG
+    mrb makePackage >$UPSLOG 2>&1
+  fi
+  # Test the product.
+  if [ -n "$UPSTEST" ]; then
+    UPSLOG=$TOPDIR/workdir/$RELDIR/upstest.log
+    echo Testing. Log is $UPSLOG
+    mrb test >$UPSLOG 2>&1
+  fi
   echo -e $LINE
-  if [ -n "$DBG" ]; then echo Exiting after product build; fi
+  echo Product build file:
   ls $TOPDIR/workdir/$RELDIR/build_*/$NEWPROD-*.tar*
   echo Done
   exit 0
@@ -581,7 +607,7 @@ if [ -n "$BUILD" ]; then
 fi
 
 # For option -t, test dunetpc.
-if [ -n "$TEST" ]; then
+if [ -n "$BLDTEST" ]; then
   echo -e $LINE
   echo Testing...
   COM="mrb test"
