@@ -54,7 +54,7 @@ if [ $STAT -ne 0 ]; then
 fi
 if [ -n "$DBG"]; then echo Retrieved larsoft manifest.; fi
 
-NEWFILE=$BUNDLE-$DOTVERS-$FLAVOR-${HYPHENQUAL}_MANIFEST.txt
+NEWFILE=$BUNDLE-$DOTVERS-$FLAVOR-${HYPHENQUALNOIFDH}_MANIFEST.txt
 cp $LARFILE $NEWFILE
 TARSUFF=$OPSYS-$PLATFORM-$HYPHENQUAL.tar.bz2
 if [ $BUNDLE == dune ]; then
@@ -68,9 +68,7 @@ if [ $BUNDLE == dune ]; then
   FORMAT="%-21s%-16s%-61s%3s\n"
   printf $FORMAT dunetpc $VERS ${TARNAME} >>$NEWFILE
   PKGS="dune_pardata lbne_raw_data"
-  if [ -z "$ISDARWIN" ]; then
-    PKGS="duneutil $PKGS"
-  fi
+  PKGS="duneutil $PKGS"
   for PKG in $PKGS; do
     # Get the version number in dot format
     PKGVERS=`ups depend dunetpc $VERS -q $QUAL | grep "|__$PKG" | sed 's/.*|__//g' | awk '{print $2}'`
@@ -79,6 +77,7 @@ if [ $BUNDLE == dune ]; then
     TEMPPKG=larsoft
     if [ $PKG = lbne_raw_data ]; then TEMPPKG=artdaq_core; fi
     if [ $PKG = dune_pardata ]; then TEMPPKG=larbatch; fi
+    if [ $PKG = duneutil ]; then TEMPPKG=cppunit; fi
     TEMPLINE=`grep "$TEMPPKG " $LARFILE | grep -v noifdh`
     if [ -z "$TEMPLINE" ]; then
       TEMPLINE=`grep "$TEMPPKG " $LARFILE`
