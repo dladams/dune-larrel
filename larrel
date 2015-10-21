@@ -178,9 +178,9 @@ source $THISDIR/duneinit.sh
 if [ -z "$QUAL" ]; then
   FLAVOR=`ups flavor`
   if echo $FLAVOR | grep -q ^Linux; then
-    QUAL="e7:prof"
+    QUAL="e9:prof"
   else if echo $FLAVOR | grep -q ^Darwin; then
-    QUAL=e7:noifdh:prof
+    QUAL=e9:noifdh:prof
   fi; fi
 fi
 
@@ -315,7 +315,7 @@ if [ -n "$DIRMAK" -a -z "$UPSPROD" ]; then
     echo "ERROR: Command failed: $COM"
     exit 1
   fi
-   echo creatednewdev >> $HISTFILE
+  echo creatednewdev >> $HISTFILE
 fi
 
 # Exit stage 1.
