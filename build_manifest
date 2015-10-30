@@ -22,7 +22,7 @@ else
 fi
 HYPHENQUALNOIFDH=`echo $QUAL | tr : - | sed 's/-noifdh//'`
 HYPHENQUAL=`echo $QUAL | tr : -`
-XXX=s20
+XXX=s21
 OPSYS=` get-directory-name os`
 PLATFORM=` get-directory-name platform`
 
