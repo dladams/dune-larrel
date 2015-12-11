@@ -11,6 +11,7 @@ QUAL=$2
 SRCDIR=$3
 VERS=$LARSOFT_VERSION
 DOTVERS=`echo $VERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
+INTVERS=`echo $VERS |  sed -e 's/_//g' | sed -e 's/^v//' | sed -e 's/^0*//g'`
 FLAVOR=
 DBG=
 ISDARWIN=
@@ -22,7 +23,8 @@ else
 fi
 HYPHENQUALNOIFDH=`echo $QUAL | tr : - | sed 's/-noifdh//'`
 HYPHENQUAL=`echo $QUAL | tr : -`
-XXX=s21
+SVAL=s21
+if [ $INTVERS -ge 43000 ]; then SVAL=s24; fi
 OPSYS=` get-directory-name os`
 PLATFORM=` get-directory-name platform`
 
@@ -39,11 +41,21 @@ done
 # Check if dunetpc is installed. This needed to get dependencies from ups.
 CHECK=`ups list -aK+ dunetpc $VERS -q $QUAL`
 if [ -z "$CHECK" ]; then
+  LINE="-----------------------------------------------------------"
+  echo Unable to find dunetpc $VERS $QUAL
+  echo These versions:
+  echo $LINE
+  ups list -aK+ dunetpc
+  echo $LINE
+  echo are found in these directories:
+  echo $LINE
+  ups list xxx | grep DATABASE | sed 's/DATABASE=//g'
+  echo $LINE
   echo Please install dunetpc $VERS $QUAL
   exit 1
 fi
 
-LARFILE=larsoft-$DOTVERS-$FLAVOR-$XXX-${HYPHENQUALNOIFDH}_MANIFEST.txt
+LARFILE=larsoft-$DOTVERS-$FLAVOR-$SVAL-${HYPHENQUALNOIFDH}_MANIFEST.txt
 LARURL=http://scisoft.fnal.gov/scisoft/bundles/larsoft/$VERS/manifest/$LARFILE
 curl --fail --silent $LARURL > $LARFILE
 STAT=$?
