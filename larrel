@@ -360,7 +360,7 @@ if [ -n "$UPSPROD" -o -n "$UPSTEST" ]; then
   RELDIR=`echo reldir-$PLATFORM-$QUAL | sed 's/:/-/g'`
   echo Release directory: $RELDIR
   if [ -n "$UPSPROD" ]; then
-    if [-r $RELDIR ]; then
+    if [ -r $RELDIR ]; then
       echo Release directory already exists.
       echo Delete workdir/$RELDIR it before to rebuilding release.
       exit 1
