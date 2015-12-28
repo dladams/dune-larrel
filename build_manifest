@@ -9,9 +9,12 @@
 BUNDLE=$1
 QUAL=$2
 SRCDIR=$3
+NEWVERS=$4
 VERS=$LARSOFT_VERSION
 DOTVERS=`echo $VERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
 INTVERS=`echo $VERS |  sed -e 's/_//g' | sed -e 's/^v//' | sed -e 's/^0*//g'`
+NEWDOTVERS=`echo $NEWVERS |  sed -e 's/_/./g' | sed -e 's/^v//'`
+NEWINTVERS=`echo $NEWVERS |  sed -e 's/_//g' | sed -e 's/^v//' | sed -e 's/^0*//g'`
 FLAVOR=
 DBG=
 ISDARWIN=
@@ -30,7 +33,7 @@ OPSYS=` get-directory-name os`
 PLATFORM=` get-directory-name platform`
 
 # Check the variables are defined.
-for VAR in BUNDLE VERS DOTVERS FLAVOR QUAL HYPHENQUAL OPSYS PLATFORM; do
+for VAR in BUNDLE VERS DOTVERS NEWVERS NEWDOTVERS FLAVOR QUAL HYPHENQUAL OPSYS PLATFORM; do
   eval VAL=\$$VAR
   if [ -z "$VAL" ]; then
     echo Variable $VAR must be defined.
@@ -40,10 +43,10 @@ for VAR in BUNDLE VERS DOTVERS FLAVOR QUAL HYPHENQUAL OPSYS PLATFORM; do
 done
 
 # Check if dunetpc is installed. This needed to get dependencies from ups.
-CHECK=`ups list -aK+ dunetpc $VERS -q $QUAL`
+CHECK=`ups list -aK+ dunetpc $NEWVERS -q $QUAL`
 if [ -z "$CHECK" ]; then
   LINE="-----------------------------------------------------------"
-  echo Unable to find dunetpc $VERS $QUAL
+  echo Unable to find dunetpc $NEWVERS $QUAL
   echo These versions:
   echo $LINE
   ups list -aK+ dunetpc
@@ -52,7 +55,7 @@ if [ -z "$CHECK" ]; then
   echo $LINE
   ups list xxx | grep DATABASE | sed 's/DATABASE=//g'
   echo $LINE
-  echo Please install dunetpc $VERS $QUAL
+  echo Please install dunetpc $NEWVERS $QUAL
   exit 1
 fi
 
@@ -68,19 +71,19 @@ if [ $STAT -ne 0 ]; then
 fi
 if [ -n "$DBG"]; then echo Retrieved larsoft manifest.; fi
 
-NEWFILE=$BUNDLE-$DOTVERS-$FLAVOR-${HYPHENQUALNOIFDH}_MANIFEST.txt
+NEWFILE=$BUNDLE-$NEWDOTVERS-$FLAVOR-${HYPHENQUALNOIFDH}_MANIFEST.txt
 cp $LARFILE $NEWFILE
 TARSUFF=$OPSYS-$PLATFORM-$HYPHENQUAL.tar.bz2
 if [ $BUNDLE == dune ]; then
-  TARNAME=dunetpc-$DOTVERS-$TARSUFF
-  PKGURL=http://scisoft.fnal.gov/scisoft/packages/dunetpc/$VERS/$TARNAME
+  TARNAME=dunetpc-$NEWDOTVERS-$TARSUFF
+  PKGURL=http://scisoft.fnal.gov/scisoft/packages/dunetpc/$NEWVERS/$TARNAME
   if ! curl -Is $PKGURL| head -1 | grep 200 >/dev/null; then
-    echo Unable to find tar file for dunetpc $VERS at URL
+    echo Unable to find tar file for dunetpc $NEWVERS at URL
     echo "   $PKGURL"
     exit 4
   fi
   FORMAT="%-21s%-16s%-61s%3s\n"
-  printf $FORMAT dunetpc $VERS ${TARNAME} >>$NEWFILE
+  printf $FORMAT dunetpc $NEWVERS ${TARNAME} >>$NEWFILE
   PKGS="dune_pardata lbne_raw_data"
   PKGS="duneutil $PKGS"
   PRODDEPS=$SRCDIR/dunetpc/ups/product_deps

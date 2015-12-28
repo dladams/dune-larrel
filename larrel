@@ -471,7 +471,7 @@ if [ -n "$MANIFEST" ]; then
   RELDIR=`echo reldir-$PLATFORM-$QUAL | sed 's/:/-/g'`
   SRCDIR=`pwd`/$RELDIR/srcs
   cd manifests
-  $THISDIR/build_manifest $MANIFEST $QUAL $SRCDIR
+  $THISDIR/build_manifest $MANIFEST $QUAL $SRCDIR $NEWVERS
   cd $OLDDIR
   exit 0
 fi
