@@ -30,6 +30,7 @@ SVAL=s21
 if [ $INTVERS -ge 43000 ]; then SVAL=s24; fi
 if [ $INTVERS -ge 43100 ]; then SVAL=s26; fi
 if [ $INTVERS -ge 43201 ]; then SVAL=s28; fi
+if [ $INTVERS -ge 43500 ]; then SVAL=s30; fi
 OPSYS=` get-directory-name os`
 PLATFORM=` get-directory-name platform`
 
