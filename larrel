@@ -179,9 +179,11 @@ if [ -z "$QUAL" ]; then
   FLAVOR=`ups flavor`
   if echo $FLAVOR | grep -q ^Linux; then
     QUAL="e9:prof"
+    QUAL="e10:prof"
   else if echo $FLAVOR | grep -q ^Darwin; then
     #QUAL=e9:noifdh:prof   # for v04_29_02 and earlier
     QUAL=e9:prof          # for v04_30_01 and later
+    QUAL=e10:prof          # for v06_00_01 and later
   fi; fi
 fi
 
@@ -417,7 +419,7 @@ if [ -n "$UPSPROD" -o -n "$UPSTEST" ]; then
     # Build the product.
     UPSLOG=$TOPDIR/workdir/$RELDIR/upsbuild.log
     echo Building. Log is $UPSLOG
-    mrb b >$UPSLOG 2>&1
+    mrb b -j 6 >$UPSLOG 2>&1
     UPSLOG=$TOPDIR/workdir/$RELDIR/upsmake.log
     echo Making product. Log is $UPSLOG
     mrb makePackage >$UPSLOG 2>&1
