@@ -12,6 +12,7 @@ NEWPROD=dunetpc
 TOPDIR=`pwd`
 HISTFILE=$TOPDIR/history
 COMHISTFILE=$TOPDIR/comhistory
+COMHISTFILE=$TOPDIR/taghistory
 
 DBG=
 HELP=
@@ -81,6 +82,7 @@ if [ -n "$REMALL" ]; then
   rm -rf workdir
   rm -f $HISTFILE
   rm -f $COMHISTFILE
+  rm -f $TAGHISTFILE
   rm -rf oldversion.txt
   rm -rf newversion.txt
   rm -rf ups*.log
@@ -209,6 +211,7 @@ if [ -n "$REMDIR" ]; then
   rm -rf workdir
   rm -f $HISTFILE
   rm -f $COMHISTFILE
+  rm -f $TAGHISTFILE
 fi
 
 # Retrieve the old (larsoft) version.
@@ -673,13 +676,22 @@ if [ -n "$ENDFLOW" ]; then
   COM="git flow release finish -m Ended_flow_for_${NEWPROD}_$NEWVERS $NEWVERS"
   $COMED1
   echo $COM >>$COMHISTFILE
-  if ! $COM; then
-    echo ERROR: Finishing flow failed.
-    git config --global core.editor $OLDEDITOR
-    $COMED2
+  date >$TAGHISTFILE
+  echo >>$TAGHISTFILE
+  echo Before ending flow: >>$TAGHISTFILE
+  git tag >>$TAGHISTFILE
+  $COM
+  RSTAT=$?
+  echo >>$TAGHISTFILE
+  echo After ending flow: >>$TAGHISTFILE
+  git tag >>$TAGHISTFILE
+  $COMED2
+  if [ $RSTAT -ne 0 ]; then
+    MSG="ERROR: Finishing flow failed."
+    echo $MSG >>$HISTFILE
+    echo $MSG
     exit 1
   fi
-  $COMED2
   echo "%%%%%%%%%%%%%%%"
   echo flowfinished >> $HISTFILE
 fi
