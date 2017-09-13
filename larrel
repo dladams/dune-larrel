@@ -658,6 +658,13 @@ if [ -n "$COMMIT" ]; then
       exit 1
     fi
     echo committed >> $HISTFILE
+    # Make sure the update of product_deps makes it to develop.
+    # Commits during the build may overwrite this.
+    #git checkout develop #this may not be necessarge
+    git pull
+    git merge $NEWVERS
+    git push
+    echo updated >> $HISTFILE
   fi
 fi
 
