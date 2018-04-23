@@ -93,6 +93,7 @@ if [ $BUNDLE == dune ]; then
   printf $FORMAT dunetpc $NEWVERS ${TARNAME} >>$NEWFILE
   PKGS="dune_pardata lbne_raw_data"
   PKGS="duneutil $PKGS"
+  PKGS="dune_raw_data $PKGS"
   PRODDEPS=$SRCDIR/dunetpc/ups/product_deps
   if [ ! -r $PRODDEPS ]; then
     echo Product deps not found at
