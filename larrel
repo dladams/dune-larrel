@@ -188,6 +188,10 @@ if [ -z "$QUAL" ]; then
     QUAL="e17:prof"  # v07_00_00
     QUAL="e15:prof"  # v07_00_01
     QUAL="e17:prof"  # v07_01_00
+    QUAL="e19:prof"  # v08_39_00
+    QUAL="e19:prof:py2"  # v08_4?_00
+    QUAL="e19:prof"  # v08_47_00
+    QUAL="e20:prof"  # v09_23_00
   elif echo $FLAVOR | grep -q ^Darwin; then
     #QUAL=e9:noifdh:prof   # for v04_29_02 and earlier
     QUAL=e9:prof          # for v04_30_01 and later
